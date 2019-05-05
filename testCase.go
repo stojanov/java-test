@@ -18,16 +18,15 @@ type failedTest struct {
 
 func newTestCase(filepath string) (*testCase, error) {
 	file, err := os.Open(filepath)
+	defer file.Close()
+
 	if err != nil {
 		return &testCase{}, err
 	}
 
-	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 
 	var in, out bytes.Buffer
-
 	var builder *bytes.Buffer
 
 	for scanner.Scan() {

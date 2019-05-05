@@ -28,11 +28,9 @@ func main() {
 	var javaFiles []string
 	for _, file := range dirfiles {
 		fName := file.Name()
-
 		if !strings.Contains(fName, ".java") {
 			continue
 		}
-
 		javaFiles = append(javaFiles, path.Join(*srcdirPtr, fName))
 	}
 
@@ -52,20 +50,17 @@ func main() {
 	// Read tests
 	go func() {
 		testFiles, err := ioutil.ReadDir(*testdirPtr)
-
 		if err != nil {
 			errorf("Error while reading test files: %v", err)
 		}
 
 		for _, testFile := range testFiles {
 			fName := testFile.Name()
-
 			if !strings.Contains(fName, ".javatest") {
 				continue
 			}
 
 			newTest, err := newTestCase(path.Join(*testdirPtr, fName))
-
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error while trying to read testfile %s", fName)
 				continue
@@ -100,14 +95,13 @@ func main() {
 			for test := range tests {
 				out, err := runJava(*bindirPtr, *srcdirPtr, *entryPtr, test.in)
 
-				sOut := strings.TrimSpace(out.String())
 				sTestOut := strings.TrimSpace(test.out.String())
-
 				if err != nil {
 					failedTestsChan <- failedTest{expected: sTestOut, got: err.Error()}
 					continue
 				}
 
+				sOut := strings.TrimSpace(out.String())
 				if strings.Compare(sOut, sTestOut) != 0 {
 					failedTestsChan <- failedTest{expected: sTestOut, got: sOut}
 				}

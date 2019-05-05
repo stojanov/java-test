@@ -3,12 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -26,7 +24,6 @@ func runProgram(program string, inBuffer *bytes.Buffer, timeout time.Duration, c
 
 	var outBuf bytes.Buffer
 	var errBuf bytes.Buffer
-
 	execCmd.Stdout = &outBuf
 	execCmd.Stderr = &errBuf
 
@@ -36,7 +33,6 @@ func runProgram(program string, inBuffer *bytes.Buffer, timeout time.Duration, c
 
 	isRunning := true
 	timeoutReached := false
-
 	if timeout != 0 {
 		go func() {
 			start := time.Now()
@@ -63,28 +59,6 @@ func runProgram(program string, inBuffer *bytes.Buffer, timeout time.Duration, c
 	isRunning = false
 
 	return &outBuf, nil
-}
-
-func findFiles(ext string) func(dirpath string) ([]string, error) {
-	return func(dirpath string) ([]string, error) {
-		files, err := ioutil.ReadDir(dirpath)
-
-		if err != nil {
-			return nil, err
-		}
-
-		var testFiles []string
-
-		for _, f := range files {
-			fName := f.Name()
-
-			if strings.Contains(fName, ext) {
-				testFiles = append(testFiles, path.Join(dirpath, fName))
-			}
-		}
-
-		return testFiles, nil
-	}
 }
 
 func compileJava(outDir string, release int, files []string) error {
