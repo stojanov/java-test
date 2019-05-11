@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 func main() {
@@ -78,12 +80,14 @@ func main() {
 	// they won't block
 	failedTestsChan := make(chan failedTest, 5)
 	var failedTests []failedTest
+	ready := make(chan bool, 1)
 
 	// Collect the channel into a slice
 	go func() {
 		for f := range failedTestsChan {
 			failedTests = append(failedTests, f)
 		}
+		ready <- true
 	}()
 
 	wg.Add(*concurrencyPtr)
@@ -93,7 +97,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for test := range tests {
-				out, err := runJava(*bindirPtr, *srcdirPtr, *entryPtr, test.in)
+				out, err := runJava(*bindirPtr, *entryPtr, test.in)
 
 				sTestOut := strings.TrimSpace(test.out.String())
 				if err != nil {
@@ -111,13 +115,17 @@ func main() {
 
 	wg.Wait()
 	close(failedTestsChan)
+	<-ready // Wait for failedTestsChan to drain
 
-	fmt.Printf("Successful Tests (%d/%d)\n", testCounter-len(failedTests), testCounter)
+	lFailed := len(failedTests)
 
-	if len(failedTests) > 0 {
-		fmt.Println("Failed tests:")
+	failClr := color.New(color.Bold, color.FgWhite, color.BgRed).SprintfFunc()
+	fmt.Printf("Successful Tests (%d/%d)\n", testCounter-lFailed, testCounter)
+
+	if lFailed > 0 {
+		fmt.Println("\nFailed Tests: ")
 		for i, f := range failedTests {
-			fmt.Printf("Test (%d)\n", i)
+			fmt.Println(failClr("Test (%d)", i))
 			fmt.Println("\tExpected:")
 			fmt.Printf("\t%s\n", f.expected)
 			fmt.Println("\tGot:")
@@ -126,5 +134,5 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Testing took %v", time.Since(start))
+	fmt.Printf("Finished in %v", time.Since(start))
 }
